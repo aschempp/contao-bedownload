@@ -168,6 +168,13 @@ class FileDownload extends Widget implements uploadable
 		$objUpload = $this->getUploadField();
 		$objUpload->validate();
 
+		// Inherit the errors from upload field
+		if ($objUpload->hasErrors())
+		{
+			$this->class = 'error';
+			$this->arrErrors = $objUpload->getErrors();
+		}
+
 		return str_replace(TL_ROOT . '/', '', $_SESSION['FILES'][$this->strName]['tmp_name']);
 	}
 	
