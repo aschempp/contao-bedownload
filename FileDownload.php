@@ -21,6 +21,7 @@
  * PHP version 5
  * @copyright  Andreas Schempp 2008
  * @author     Andreas Schempp <andreas@schempp.ch
+ * @author     Kamil Kuźmiński <kamil.kuzminski@gmail.com>
  * @license    LGPL
  */
 
@@ -29,13 +30,13 @@
  * Backend field for frontend field "file upload"
  * Allows to download the uploaded file
  */
-class FileDownload extends Widget
+class FileDownload extends Widget implements uploadable
 {
 	/**
 	 * Submit user input
 	 * @var boolean
 	 */
-	protected $blnSubmitInput = false;
+	protected $blnSubmitInput = true;
 	
 	/**
 	 * Template
@@ -51,7 +52,8 @@ class FileDownload extends Widget
 	public function generate()
 	{
 		$strFile = $this->value;
-		
+		$strReturn = '';
+
 		if (is_array($strFile) && count($strFile))
 		{
 			$strZip = 'system/html/'.md5(serialize($strFile)).'.zip';
@@ -77,7 +79,7 @@ class FileDownload extends Widget
 				{
 				    $objZip->close();
 				    unlink(TL_ROOT . '/' . $strZip);
-				    return $GLOBALS['TL_LANG']['MSC']['nodownload'];
+				    $strReturn .= $GLOBALS['TL_LANG']['MSC']['nodownload'];
 				}
 				
 				$objZip->close();
@@ -88,13 +90,56 @@ class FileDownload extends Widget
 		
 		if (!file_exists(TL_ROOT . '/' . $strFile) || is_dir(TL_ROOT . '/' . $strFile))
 		{
-            return $GLOBALS['TL_LANG']['MSC']['nodownload'];
+            $strReturn .= $GLOBALS['TL_LANG']['MSC']['nodownload'];
 		}
-		
-		return sprintf('<a href="%s" onclick="window.open(this.href); return false;" id="%s" class="tl_upload%s">%s</a>', 
-				$strFile,
-				$this->strId,
-				(strlen($this->strClass) ? ' ' . $this->strClass : ''), 
-				$GLOBALS['TL_LANG']['MSC']['download']);
+		else
+		{
+			$strReturn = sprintf('<a href="%s" onclick="window.open(this.href); return false;" id="%s" class="tl_upload%s">%s</a>', 
+								  $strFile,
+								  $this->strId,
+								  (strlen($this->strClass) ? ' ' . $this->strClass : ''), 
+								  $GLOBALS['TL_LANG']['MSC']['download']);
+		}
+
+		// Add upload form field
+		$objUpload = $this->getUploadField();
+		$strReturn .= '<br>' . $objUpload->generateWithError();
+
+		return $strReturn;
+	}
+	
+	
+	/**
+	 * Recursively validate an input variable
+	 * @param mixed
+	 * @return mixed
+	 */
+	protected function validator($varValue)
+	{
+		$objUpload = $this->getUploadField();
+		$objUpload->validate();
+
+		return str_replace(TL_ROOT . '/', '', $_SESSION['FILES'][$this->strName]['tmp_name']);
+	}
+	
+	
+	/**
+	 * Return an upload field object as array
+	 * @return object
+	 */
+	private function getUploadField()
+	{
+		$arrUploadTypes = ($this->extensions != '') ? $this->extensions : $GLOBALS['TL_CONFIG']['uploadTypes'];
+		$strUploadFolder = ($this->uploadFolder != '') ? $this->uploadFolder : 'tl_files';
+		$blnDoNotOverwrite = $this->doNotOverwrite ? true : false;
+
+		$arrField = array
+		(
+			'name' => $this->strName,
+			'inputType' => 'upload',
+			'eval' => array('storeFile'=>true, 'uploadFolder'=>$strUploadFolder, 'extensions'=>$arrUploadTypes, 'doNotOverwrite'=>$blnDoNotOverwrite)
+		);
+
+		return new FormFileUpload($this->prepareForWidget($arrField, $arrField['name']));
 	}
 }
