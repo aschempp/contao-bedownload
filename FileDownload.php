@@ -37,13 +37,58 @@ class FileDownload extends Widget implements uploadable
 	 * Submit user input
 	 * @var boolean
 	 */
-	protected $blnSubmitInput = true;
+	protected $blnSubmitInput = false;
 	
 	/**
 	 * Template
 	 * @var string
 	 */
 	protected $strTemplate = 'be_widget';
+
+
+	/**
+	 * Set a parameter
+	 * @param string
+	 * @param mixed
+	 */
+	public function __set($strKey, $varValue)
+	{
+		switch ($strKey)
+		{
+			case 'uploader':
+				$this->uploader = $varValue;
+	
+				if ($varValue == true)
+				{
+					$this->blnSubmitInput = true;
+				}
+				break;
+		}
+
+		return parent::__set($strKey, $varValue);
+	}
+
+
+	/**
+	 * Return a parameter
+	 * @param string
+	 * @return string
+	 */
+	public function __get($strKey)
+	{
+		switch ($strKey)
+		{
+			case 'extensions':
+				return ($this->extesnions != '') ? $this->extensions : $GLOBALS['TL_CONFIG']['uploadTypes'];
+				break;
+
+			case 'uploadFolder':
+				return ($this->uploadFolder != '') ? $$this->uploadFolder : 'tl_files';
+				break;
+		}
+
+		return parent::__get($strKey);
+	}
 	
 	
 	/**
@@ -103,8 +148,11 @@ class FileDownload extends Widget implements uploadable
 		}
 
 		// Add upload form field
-		$objUpload = $this->getUploadField();
-		$strReturn .= '<br>' . $objUpload->generateWithError();
+		if ($this->uploader)
+		{
+			$objUpload = $this->getUploadField();
+			$strReturn .= '<br>' . $objUpload->generateWithError();
+		}
 
 		return $strReturn;
 	}
@@ -130,15 +178,11 @@ class FileDownload extends Widget implements uploadable
 	 */
 	private function getUploadField()
 	{
-		$arrUploadTypes = ($this->extensions != '') ? $this->extensions : $GLOBALS['TL_CONFIG']['uploadTypes'];
-		$strUploadFolder = ($this->uploadFolder != '') ? $this->uploadFolder : 'tl_files';
-		$blnDoNotOverwrite = $this->doNotOverwrite ? true : false;
-
 		$arrField = array
 		(
 			'name' => $this->strName,
 			'inputType' => 'upload',
-			'eval' => array('storeFile'=>true, 'uploadFolder'=>$strUploadFolder, 'extensions'=>$arrUploadTypes, 'doNotOverwrite'=>$blnDoNotOverwrite)
+			'eval' => array('storeFile'=>true, 'uploadFolder'=>$this->uploadFolder, 'extensions'=>$this->extensions, 'doNotOverwrite'=>$this->doNotOverwrite)
 		);
 
 		return new FormFileUpload($this->prepareForWidget($arrField, $arrField['name']));
