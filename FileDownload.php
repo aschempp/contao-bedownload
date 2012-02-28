@@ -175,7 +175,16 @@ class FileDownload extends Widget implements uploadable
 			$this->arrErrors = $objUpload->getErrors();
 		}
 
-		return str_replace(TL_ROOT . '/', '', $_SESSION['FILES'][$this->strName]['tmp_name']);
+		// Return current value if no file was uploaded
+		if (!isset($_SESSION['FILES'][$this->strName]))
+		{
+			return $this->value;
+		}
+
+		$strFile = $_SESSION['FILES'][$this->strName]['tmp_name'];
+		unset($_SESSION['FILES'][$this->strName]);
+
+		return str_replace(TL_ROOT . '/', '', $strFile);
 	}
 	
 	
