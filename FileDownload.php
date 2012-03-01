@@ -63,31 +63,17 @@ class FileDownload extends Widget implements uploadable
 					$this->blnSubmitInput = true;
 				}
 				break;
-		}
 
-		return parent::__set($strKey, $varValue);
-	}
-
-
-	/**
-	 * Return a parameter
-	 * @param string
-	 * @return string
-	 */
-	public function __get($strKey)
-	{
-		switch ($strKey)
-		{
 			case 'extensions':
-				return ($this->extesnions != '') ? $this->extensions : $GLOBALS['TL_CONFIG']['uploadTypes'];
+				$this->extensions = ($varValue != '') ? $varValue : $GLOBALS['TL_CONFIG']['uploadTypes'];
 				break;
 
 			case 'uploadFolder':
-				return ($this->uploadFolder != '') ? $$this->uploadFolder : 'tl_files';
+				$this->uploadFolder = ($varValue != '') ? $varValue : $GLOBALS['TL_CONFIG']['uploadPath'];
 				break;
 		}
 
-		return parent::__get($strKey);
+		return parent::__set($strKey, $varValue);
 	}
 	
 	
